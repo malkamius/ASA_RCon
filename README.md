@@ -1,4 +1,4 @@
-# ASA_RCon
+# Ark Survival Ascended RCon
  Basic RCon for Ark Survival Ascended Servers
 
 Edit "ARK Survival Ascended Dedicated Server\ShooterGame\Saved\Config\WindowsServer\GameUserSettings.ini"
