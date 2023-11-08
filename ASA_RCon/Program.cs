@@ -98,6 +98,11 @@ void ReceiveCallback(object state)
                     }
                     var _timer = new Timer(KeepAliveCallback, null, 20000, 20000);
                 } 
+                else if(packet.command_code == 767)
+                {
+                    Console.WriteLine("Authentication failed.");
+                    System.Environment.Exit(0);
+                }
                 else if (ExpectingKeepAliveResponse && packet.command_code == 11 && packet.command.StartsWith("Server received, But no response!!"))
                 {
                     ExpectingKeepAliveResponse = false;

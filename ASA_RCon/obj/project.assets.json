@@ -913,11 +913,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Giaken\\source\\repos\\ASA_RCon\\ASA_RCon\\ASA_RCon.csproj",
+      "projectUniqueName": "C:\\Users\\Giaken\\OneDrive\\Documents\\GitHub\\ASA_RCon\\master\\ASA_RCon\\ASA_RCon\\ASA_RCon.csproj",
       "projectName": "ASA_RCon",
-      "projectPath": "C:\\Users\\Giaken\\source\\repos\\ASA_RCon\\ASA_RCon\\ASA_RCon.csproj",
+      "projectPath": "C:\\Users\\Giaken\\OneDrive\\Documents\\GitHub\\ASA_RCon\\master\\ASA_RCon\\ASA_RCon\\ASA_RCon.csproj",
       "packagesPath": "C:\\Users\\Giaken\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Giaken\\source\\repos\\ASA_RCon\\ASA_RCon\\obj\\",
+      "outputPath": "C:\\Users\\Giaken\\OneDrive\\Documents\\GitHub\\ASA_RCon\\master\\ASA_RCon\\ASA_RCon\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Users\\Giaken\\AppData\\Roaming\\Godot\\mono\\GodotNuGetFallbackFolder",
