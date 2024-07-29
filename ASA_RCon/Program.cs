@@ -82,6 +82,7 @@ if (settings != null)
         var task = Console.In.ReadLineAsync();
         task.Wait();
         var command = task.Result;
+        commandsCount++;
         if(command != null && command.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
         {
             running = false;
@@ -99,6 +100,9 @@ if (settings != null)
             buffer = SerializePacket(packet);
             rconSocket.Send(buffer);
         }
+        
+        commandsResponsesReceived.WaitOne();
+        commandsResponsesReceived.Reset();
     }
 
     Console.WriteLine("Goodbye.");
@@ -123,7 +127,8 @@ void ExecuteCommands(IEnumerable<string> commands)
             var packet = BuildPacket(RCON_COMMAND_CODES.RCON_EXEC_COMMAND, command);
             var buffer = SerializePacket(packet);
             rconSocket.Send(buffer);
-            
+            // wait for each response before sending another command
+            commandsResponsesReceived.WaitOne();
         }
     }
 }
@@ -142,8 +147,17 @@ void ReceiveCallback(object state)
                 packet.size = BitConverter.ToInt32(receiveBuffer, parsed);
                 packet.id = BitConverter.ToInt32(receiveBuffer, parsed + 3);
                 packet.command_code = BitConverter.ToInt32(receiveBuffer, parsed + 7);
-                packet.command = System.Text.Encoding.ASCII.GetString(receiveBuffer, parsed + 12, Math.Max(0, Math.Min(length - 14, packet.size - 8)));
-                parsed += Math.Min(length, packet.size + 4);
+                packet.command = System.Text.Encoding.ASCII.GetString(receiveBuffer, parsed + 12, Math.Max(0, Math.Min(length - 14, packet.size - 10)));
+                var parsed_before_size = parsed;
+                parsed += packet.size + 4;
+                if(parsed > length || packet.size < 0) {
+                   // var buffer = System.Text.Encoding.ASCII.GetString(receiveBuffer, parsed_before_size, length - parsed_before_size - 2);
+
+                    parsed = length;
+                    
+                    Console.WriteLine($"Failed parsing packets.");
+                    continue;
+                }
                 if (packet.command_code != 0)
                 {
                     if (packet.command_code == 523)
