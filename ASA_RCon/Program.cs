@@ -69,7 +69,7 @@ if (settings != null)
         {
             var lines = File.ReadLines(settings.BatchPath);
             commandsResponsesReceived.Reset();
-            
+
             ExecuteCommands(lines);
 
             commandsResponsesReceived.WaitOne();
@@ -118,10 +118,12 @@ void ExecuteCommands(IEnumerable<string> commands)
         }
         else
         {
+            commandsResponsesReceived.Reset();
+            commandsCount++;
             var packet = BuildPacket(RCON_COMMAND_CODES.RCON_EXEC_COMMAND, command);
             var buffer = SerializePacket(packet);
             rconSocket.Send(buffer);
-            commandsCount++;
+            
         }
     }
 }
