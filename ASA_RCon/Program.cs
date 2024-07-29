@@ -27,7 +27,6 @@ var authenticated = new ManualResetEvent(false);
 var commandsResponsesReceived = new ManualResetEvent(true);
 var keepAliveResponseReceived = new ManualResetEvent(true);
 var ExpectingKeepAliveResponse = false;
-var commandsCount = 0;
 Timer? _timer = null;
 if (settings != null)
 {
@@ -84,8 +83,8 @@ if (settings != null)
         var task = Console.In.ReadLineAsync();
         task.Wait();
         var command = task.Result;
-        
-        commandsCount++;
+        commandsResponsesReceived.WaitOne();
+        commandsResponsesReceived.Reset();
         if(command != null && command.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
         {
             running = false;
@@ -105,7 +104,7 @@ if (settings != null)
         }
         
         commandsResponsesReceived.WaitOne();
-        commandsResponsesReceived.Reset();
+        
     }
 
     Console.WriteLine("Goodbye.");
@@ -126,7 +125,6 @@ void ExecuteCommands(IEnumerable<string> commands)
         else
         {
             commandsResponsesReceived.Reset();
-            commandsCount++;
             var packet = BuildPacket(RCON_COMMAND_CODES.RCON_EXEC_COMMAND, command);
             var buffer = SerializePacket(packet);
             rconSocket.Send(buffer);
@@ -194,17 +192,13 @@ void ReceiveCallback(object state)
                     {
                         Console.WriteLine($"{DateTime.Now} TEXT: {packet.command.Trim()}");
                         Console.Write("> ");
-                        if(commandsCount > 0 && --commandsCount == 0) {
-                            commandsResponsesReceived.Set();
-                        }
+                        commandsResponsesReceived.Set();
                     }
                     else
                     {
                         Console.WriteLine($"{DateTime.Now} ::: SIZE: {packet.size} ID: {packet.id} CODE: {packet.command_code} TEXT: {packet.command.Trim()}");
                         Console.Write("> ");
-                        if(commandsCount > 0 && --commandsCount == 0) {
-                            commandsResponsesReceived.Set();
-                        }
+                        commandsResponsesReceived.Set();
                     }
                 }                
             }
