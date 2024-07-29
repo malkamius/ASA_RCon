@@ -24,9 +24,11 @@ const int RCON_PID = 0xBADC0DE;
 IAsyncResult? receiveResult = null;
 var receiveBuffer = new byte[4096];
 var authenticated = new ManualResetEvent(false);
-var commandsResponsesReceived = new ManualResetEvent(false);
+var commandsResponsesReceived = new ManualResetEvent(true);
+var keepAliveResponseReceived = new ManualResetEvent(true);
 var ExpectingKeepAliveResponse = false;
 var commandsCount = 0;
+Timer? _timer = null;
 if (settings != null)
 {
     bool running = true;
@@ -82,6 +84,7 @@ if (settings != null)
         var task = Console.In.ReadLineAsync();
         task.Wait();
         var command = task.Result;
+        
         commandsCount++;
         if(command != null && command.Equals("exit", StringComparison.InvariantCultureIgnoreCase))
         {
@@ -173,7 +176,7 @@ void ReceiveCallback(object state)
                             Console.WriteLine("Authenticated.");
                             Console.Write("> ");
                         }
-                        var _timer = new Timer(KeepAliveCallback, null, 20000, 20000);
+                        _timer = new Timer(KeepAliveCallback, null, 30000, 30000);
                         authenticated.Set();
                     } 
                     else if(packet.command_code == 767)
@@ -184,6 +187,16 @@ void ReceiveCallback(object state)
                     else if (ExpectingKeepAliveResponse && packet.command_code == 11 && packet.command.StartsWith("Server received, But no response!!"))
                     {
                         ExpectingKeepAliveResponse = false;
+                        keepAliveResponseReceived.Set();
+                        Console.WriteLine("KEEPALIVE response received");
+                    }
+                    else if(packet.command_code == 11) 
+                    {
+                        Console.WriteLine($"{DateTime.Now} TEXT: {packet.command.Trim()}");
+                        Console.Write("> ");
+                        if(commandsCount > 0 && --commandsCount == 0) {
+                            commandsResponsesReceived.Set();
+                        }
                     }
                     else
                     {
@@ -215,10 +228,19 @@ void ReceiveCallback(object state)
 
 void KeepAliveCallback(object? state)
 {
-    ExpectingKeepAliveResponse = true;
-    var packet = BuildPacket(RCON_COMMAND_CODES.RCON_RESPONSEVALUE, "KeepAlive");
-    var buffer = SerializePacket(packet);
-    rconSocket.Send(buffer);
+        commandsResponsesReceived.WaitOne();
+
+        if(!keepAliveResponseReceived.WaitOne(0))
+        {
+            Console.WriteLine("KEEP ALIVE Response not received before next keepalive");
+        }
+
+        keepAliveResponseReceived.Reset();
+        ExpectingKeepAliveResponse = true;
+        var packet = BuildPacket(RCON_COMMAND_CODES.RCON_RESPONSEVALUE, "KeepAlive");
+        var buffer = SerializePacket(packet);
+        rconSocket.Send(buffer);
+        keepAliveResponseReceived.WaitOne();
 }
 
 RConPacket BuildPacket(RCON_COMMAND_CODES CommandCode, string CommandText)
